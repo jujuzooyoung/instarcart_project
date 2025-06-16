@@ -79,23 +79,40 @@ def data():
     # 5. 가중치를 반영한 RFM 점수 계산
     rfm_df['RFM_score'] = rfm_df['R_score'] * 0.2 + rfm_df['F_score'] * 0.5 + rfm_df['M_score'] * 0.3  # 가중치 부여
     
-    # 6. 가중치 기반 RFM 점수를 1~10 사이로 조정 (점수화)
+    # 6. 가중치 기반 RFM 점수를 1~5 사이로 조정
     rfm_df['RFM_score'] = pd.qcut(rfm_df['RFM_score'],5, labels=False, duplicates='drop') + 1  # 점수화
     
     print('전체 RFM_score 계산 완료')
     
     
     
-    # 7. 충성도 분류 (1~5 이탈율 높은 고객, 6~8 중간 고객, 9~10 충성도 높은 고객)
-
+    def loyalty_category(score):
+        if score == 1:
+            return '이탈 고객'
+        elif score == 2:
+            return '이탈 위험 고객'
+        elif score == 3:
+            return '일반 고객'
+        elif score == 4:
+            return '우수 고객'
+        else:
+            return '충성도 높은 고객'
+    
+    rfm_df['Loyalty'] = rfm_df['RFM_score'].apply(loyalty_category)
+    
+    # 결과 출력
+    rfm_df = rfm_df.sort_values(by = 'RFM_score', ascending = False)
+    
+    
+    print('등급 나누기 완료')
+    
     for_merge = rfm_df[['user_id', 'Loyalty']]
     
     
     
     merged_products = merged_products.merge(for_merge, on = 'user_id', how = 'left')
+    
     merged_products = merged_products[merged_products['aisle'] != 'missing']
     merged_products = merged_products[merged_products['aisle'] != 'other']
-
+    
     print('최종 데이터 완성')
-
-    return merged_products
